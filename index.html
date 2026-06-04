@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifikasi Integritas File — Multi-Algoritma</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --text-dim: #8b949e;
+            --accent: #58a6ff;
+            --accent-glow: rgba(88, 166, 255, 0.15);
+            --success: #3fb950;
+            --success-glow: rgba(63, 185, 80, 0.15);
+            --danger: #f85149;
+            --danger-glow: rgba(248, 81, 73, 0.15);
+            --warning: #d29922;
+            --warning-glow: rgba(210, 153, 34, 0.18);
+            --radius: 12px;
+            --transition: 0.2s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 720px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .header .icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(0 0 12px var(--accent-glow));
+            display: inline-block;
+        }
+
+        .header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #f0f6fc;
+        }
+
+        .header p {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .tabs {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.4rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-weight: 600;
+            padding: 0.6rem 0.8rem;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: inherit;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-glow);
+            color: var(--accent);
+            border: 1px solid rgba(88, 166, 255, 0.4);
+        }
+
+        .tab-panel {
+            display: none;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .tab-panel.active {
+            display: flex;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+
+        .card:hover {
+            border-color: #484f58;
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .dropzone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 3rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dropzone:hover,
+        .dropzone.dragover {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+        }
+
+        .dropzone .dz-icon {
+            font-size: 3rem;
+            margin-bottom: 0.75rem;
+            display: inline-block;
+        }
+
+        .dropzone .dz-text {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .dropzone .dz-hint {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+
+        #fileInput,
+        .hidden-input {
+            display: none;
+        }
+
+        .field-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .field-label {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 600;
+            padding-top: 0.2rem;
+        }
+
+        .field-control {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .field-hint {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        select,
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.9rem;
+            transition: border-color var(--transition), box-shadow var(--transition);
+            outline: none;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        select {
+            font-family: inherit;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: #484f58;
+        }
+
+        .inline-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .file-info {
+            display: none;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+
+        .file-info.visible {
+            display: flex;
+        }
+
+        .file-info .fi-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .file-info .fi-label {
+            color: var(--text-dim);
+        }
+
+        .file-info .fi-value {
+            font-weight: 500;
+            text-align: right;
+            word-break: break-all;
+        }
+
+        .progress-wrap {
+            display: none;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .progress-wrap.visible {
+            display: flex;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent), #79c0ff, var(--accent));
+            background-size: 200% 100%;
+            border-radius: 99px;
+            animation: shimmerBar 2s linear infinite;
+        }
+
+        @keyframes shimmerBar {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .progress-text {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            text-align: center;
+        }
+
+        .hash-section {
+            display: none;
+            flex-direction: column;
+            gap: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hash-section.visible {
+            display: flex;
+        }
+
+        .hash-label {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .hash-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hash-display code {
+            font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            word-break: break-all;
+            flex: 1;
+            color: var(--accent);
+        }
+
+        .btn-copy {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            transition: all var(--transition);
+            white-space: nowrap;
+            font-family: inherit;
+        }
+
+        .btn-copy:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-glow);
+        }
+
+        .btn-copy.copied {
+            border-color: var(--success);
+            color: var(--success);
+            background: var(--success-glow);
+        }
+
+        .compare-section {
+            display: none;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .compare-section.visible {
+            display: flex;
+        }
+
+        .btn-compare {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-compare:hover {
+            filter: brightness(1.15);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+
+        .btn-compare:active {
+            transform: scale(0.98);
+        }
+
+        .btn-compare::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: translateX(-100%);
+        }
+
+        .btn-compare.shine::after {
+            animation: btnShine 0.6s ease;
+        }
+
+        @keyframes btnShine {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .status {
+            display: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .status.visible {
+            display: flex;
+        }
+
+        .status.valid {
+            background: var(--success-glow);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .status.invalid {
+            background: var(--danger-glow);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .status.warn {
+            background: var(--warning-glow);
+            border: 1px solid var(--warning);
+            color: var(--warning);
+        }
+
+        .history-section {
+            display: none;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .history-section.visible {
+            display: flex;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-title {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.65rem 0.85rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            transition: border-color var(--transition);
+        }
+
+        .history-item:hover {
+            border-color: #484f58;
+        }
+
+        .history-name {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .history-badge {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 99px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .history-badge.valid {
+            background: var(--success-glow);
+            color: var(--success);
+        }
+
+        .history-badge.invalid {
+            background: var(--danger-glow);
+            color: var(--danger);
+        }
+
+        .history-badge.hash {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-dim);
+        }
+
+        .btn-clear-history {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--danger);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-family: inherit;
+            transition: all var(--transition);
+        }
+
+        .btn-clear-history:hover {
+            border-color: var(--danger);
+            background: var(--danger-glow);
+        }
+
+        .alert {
+            border-radius: 8px;
+            padding: 0.9rem 1rem;
+            font-size: 0.85rem;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-dim);
+        }
+
+        .alert.warn {
+            border-color: var(--warning);
+            color: var(--warning);
+            background: var(--warning-glow);
+        }
+
+        .btn-primary {
+            padding: 0.7rem 1rem;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: inherit;
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.12);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            padding: 0.6rem 0.9rem;
+            background: transparent;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: inherit;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-glow);
+        }
+
+        .credit-wrap {
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        .credit-line {
+            width: 80px;
+            height: 1px;
+            background: var(--border);
+            margin: 1rem auto;
+        }
+
+        .credit-sub {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--text-dim);
+            margin-bottom: 0.3rem;
+            font-weight: 500;
+        }
+
+        .credit-main {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #f0f6fc;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.5rem;
+        }
+
+        .credit-members {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            font-weight: 500;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .credit-dot {
+            color: #30363d;
+            font-weight: 300;
+        }
+
+        @media (max-width: 640px) {
+            .field-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 1rem 0.75rem;
+            }
+
+            .header h1 {
+                font-size: 1.3rem;
+            }
+
+            .dropzone {
+                padding: 2rem 1rem;
+            }
+
+            .hash-display {
+                flex-direction: column;
+            }
+
+            .hash-display code {
+                font-size: 0.72rem;
+            }
+
+            .btn-copy {
+                width: 100%;
+            }
+        }
+        select,
+        select option {
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="icon" id="headerIcon">🔐</div>
+            <h1>Verifikasi Integritas File</h1>
+            <p>Multi-Algoritma Hash · Client-side · Web Crypto API</p>
+        </div>
+
+        <div class="tabs" role="tablist">
+            <button class="tab-btn active" id="tabBtnIntegrity" data-tab="integrityPanel" role="tab">
+                Integritas File
+            </button>
+            <button class="tab-btn" id="tabBtnSignature" data-tab="signaturePanel" role="tab">
+                Tanda Tangan Digital
+            </button>
+        </div>
+
+        <section class="tab-panel active" id="integrityPanel" role="tabpanel">
+            <div class="card">
+                <div class="field-row">
+                    <div class="field-label">Algoritma Hash</div>
+                    <div class="field-control">
+                        <select id="algorithmSelect">
+                            <option value="SHA-1">SHA-1</option>
+                            <option value="SHA-256" selected>SHA-256</option>
+                            <option value="SHA-384">SHA-384</option>
+                            <option value="SHA-512">SHA-512</option>
+                        </select>
+                        <div class="field-hint" id="algorithmHint">Output: 64 karakter hex</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="dropzone" id="dropzone">
+                    <div class="dz-icon" id="dzIcon">📁</div>
+                    <div class="dz-text">Drop file di sini</div>
+                    <div class="dz-hint">atau klik untuk pilih file</div>
+                </div>
+                <input type="file" id="fileInput">
+            </div>
+
+            <div class="card file-info" id="fileInfo">
+                <div class="fi-row">
+                    <span class="fi-label">📄 Nama</span>
+                    <span class="fi-value fi-name" id="fiName">—</span>
+                </div>
+                <div class="fi-row">
+                    <span class="fi-label">📏 Ukuran</span>
+                    <span class="fi-value" id="fiSize">—</span>
+                </div>
+                <div class="fi-row">
+                    <span class="fi-label">🏷️ Tipe</span>
+                    <span class="fi-value" id="fiType">—</span>
+                </div>
+            </div>
+
+            <div class="card progress-wrap" id="progressWrap">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Memproses...</div>
+            </div>
+
+            <div class="card hash-section" id="hashSection">
+                <span class="hash-label">🔑 Hash <span id="hashAlgorithmLabel">SHA-256</span></span>
+                <div class="hash-display">
+                    <code id="hashOutput">—</code>
+                    <button class="btn-copy" id="btnCopy" title="Copy ke clipboard">📋 Copy</button>
+                </div>
+                <div class="hash-particles" id="hashParticles"></div>
+            </div>
+
+            <div class="card compare-section" id="compareSection">
+                <span class="hash-label">🔄 Bandingkan Hash</span>
+                <input type="text" id="compareInput" placeholder="Paste hash SHA-256 untuk dibandingkan...">
+                <div class="field-hint" id="compareHint">Panjang diharapkan: 64 karakter hex</div>
+                <button class="btn-compare" id="btnCompare">
+                    <span>Verifikasi</span>
+                </button>
+                <div class="status" id="status">
+                    <span class="status-icon" id="statusIcon"></span>
+                    <span class="status-text" id="statusText"></span>
+                </div>
+            </div>
+
+            <div class="card history-section" id="historySection">
+                <div class="history-header">
+                    <span class="history-title">📋 Riwayat</span>
+                    <button class="btn-clear-history" id="btnClearHistory">Hapus semua</button>
+                </div>
+                <div class="history-list" id="historyList"></div>
+            </div>
+        </section>
+
+        <section class="tab-panel" id="signaturePanel" role="tabpanel">
+            <div class="card">
+                <div class="card-title">Generate Keypair</div>
+                <p class="field-hint">Algoritma: ECDSA P-256 (SHA-256)</p>
+                <div class="inline-actions" style="margin-top: 0.75rem;">
+                    <button class="btn-primary" id="btnGenerateKeypair">Generate Keypair ECDSA (P-256)</button>
+                </div>
+                <div style="margin-top: 1rem; display: grid; gap: 0.75rem;">
+                    <textarea id="publicKeyOutput" placeholder="Public key (Base64)" readonly></textarea>
+                    <div class="inline-actions">
+                        <button class="btn-secondary" id="btnCopyPublic">Copy Public Key</button>
+                    </div>
+                    <textarea id="privateKeyOutput" placeholder="Private key (Base64)" readonly></textarea>
+                    <div class="inline-actions">
+                        <button class="btn-secondary" id="btnCopyPrivate">Copy Private Key</button>
+                    </div>
+                </div>
+                <div class="alert warn" style="margin-top: 0.75rem;">
+                    Simpan private key dengan aman. Jangan pernah membagikannya ke pihak lain.
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Sign File</div>
+                <div class="field-row">
+                    <div class="field-label">File</div>
+                    <div class="field-control">
+                        <div class="inline-actions">
+                            <button class="btn-secondary" id="btnSignPickFile">Pilih File</button>
+                            <span class="field-hint" id="signFileName">Belum ada file</span>
+                        </div>
+                        <input type="file" id="signFileInput" class="hidden-input">
+                    </div>
+                </div>
+                <div style="margin-top: 0.75rem; display: grid; gap: 0.75rem;">
+                    <textarea id="signPrivateKey" placeholder="Paste private key Base64"></textarea>
+                    <div class="inline-actions">
+                        <button class="btn-primary" id="btnSign">Buat Signature</button>
+                    </div>
+                    <textarea id="signatureOutput" placeholder="Signature Base64" readonly></textarea>
+                    <div class="inline-actions">
+                        <button class="btn-secondary" id="btnCopySignature">Copy Signature</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Verify Signature</div>
+                <div class="field-row">
+                    <div class="field-label">File</div>
+                    <div class="field-control">
+                        <div class="inline-actions">
+                            <button class="btn-secondary" id="btnVerifyPickFile">Pilih File</button>
+                            <span class="field-hint" id="verifyFileName">Belum ada file</span>
+                        </div>
+                        <input type="file" id="verifyFileInput" class="hidden-input">
+                    </div>
+                </div>
+                <div style="margin-top: 0.75rem; display: grid; gap: 0.75rem;">
+                    <textarea id="verifyPublicKey" placeholder="Paste public key Base64"></textarea>
+                    <textarea id="verifySignature" placeholder="Paste signature Base64"></textarea>
+                    <div class="inline-actions">
+                        <button class="btn-primary" id="btnVerify">Verifikasi Signature</button>
+                    </div>
+                    <div class="status" id="verifyStatus">
+                        <span class="status-icon" id="verifyStatusIcon"></span>
+                        <span class="status-text" id="verifyStatusText"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="credit-wrap">
+            <div class="credit-line"></div>
+            <div class="credit-sub">Created by</div>
+            <div class="credit-main">Kelompok 5</div>
+            <div class="credit-members">
+                <span>Mohamad Mughni Haunan</span>
+                <span class="credit-dot">·</span>
+                <span>Nimatul Fudla</span>
+                <span class="credit-dot">·</span>
+                <span>Nathanael Widayaka</span>
+                <span class="credit-dot">·</span>
+                <span>Faisal Rauf</span>
+            </div>
+            <div class="credit-line"></div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const algorithmSelect = document.getElementById('algorithmSelect');
+            const algorithmHint = document.getElementById('algorithmHint');
+            const compareHint = document.getElementById('compareHint');
+            const hashAlgorithmLabel = document.getElementById('hashAlgorithmLabel');
+            const dropzone = document.getElementById('dropzone');
+            const fileInput = document.getElementById('fileInput');
+            const fileInfo = document.getElementById('fileInfo');
+            const fiName = document.getElementById('fiName');
+            const fiSize = document.getElementById('fiSize');
+            const fiType = document.getElementById('fiType');
+            const progressWrap = document.getElementById('progressWrap');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const hashSection = document.getElementById('hashSection');
+            const hashOutput = document.getElementById('hashOutput');
+            const btnCopy = document.getElementById('btnCopy');
+            const compareSection = document.getElementById('compareSection');
+            const compareInput = document.getElementById('compareInput');
+            const btnCompare = document.getElementById('btnCompare');
+            const status = document.getElementById('status');
+            const statusIcon = document.getElementById('statusIcon');
+            const statusText = document.getElementById('statusText');
+            const historySection = document.getElementById('historySection');
+            const historyList = document.getElementById('historyList');
+            const btnClearHistory = document.getElementById('btnClearHistory');
+            const hashParticles = document.getElementById('hashParticles');
+            const headerIcon = document.getElementById('headerIcon');
+
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabPanels = document.querySelectorAll('.tab-panel');
+
+            const btnGenerateKeypair = document.getElementById('btnGenerateKeypair');
+            const publicKeyOutput = document.getElementById('publicKeyOutput');
+            const privateKeyOutput = document.getElementById('privateKeyOutput');
+            const btnCopyPublic = document.getElementById('btnCopyPublic');
+            const btnCopyPrivate = document.getElementById('btnCopyPrivate');
+
+            const btnSignPickFile = document.getElementById('btnSignPickFile');
+            const signFileInput = document.getElementById('signFileInput');
+            const signFileName = document.getElementById('signFileName');
+            const signPrivateKey = document.getElementById('signPrivateKey');
+            const btnSign = document.getElementById('btnSign');
+            const signatureOutput = document.getElementById('signatureOutput');
+            const btnCopySignature = document.getElementById('btnCopySignature');
+
+            const btnVerifyPickFile = document.getElementById('btnVerifyPickFile');
+            const verifyFileInput = document.getElementById('verifyFileInput');
+            const verifyFileName = document.getElementById('verifyFileName');
+            const verifyPublicKey = document.getElementById('verifyPublicKey');
+            const verifySignature = document.getElementById('verifySignature');
+            const btnVerify = document.getElementById('btnVerify');
+            const verifyStatus = document.getElementById('verifyStatus');
+            const verifyStatusIcon = document.getElementById('verifyStatusIcon');
+            const verifyStatusText = document.getElementById('verifyStatusText');
+
+            let currentFile = null;
+            let currentHash = '';
+            let currentAlgorithm = 'SHA-256';
+            let history = [];
+            let signFile = null;
+            let verifyFile = null;
+
+            const algorithms = {
+                'SHA-1': { length: 40 },
+                'SHA-256': { length: 64 },
+                'SHA-384': { length: 96 },
+                'SHA-512': { length: 128 }
+            };
+
+            function animateElement(el, keyframes, options) {
+                if (!el) return;
+                if (el.animate) {
+                    el.animate(keyframes, options);
+                } else {
+                    const last = keyframes[keyframes.length - 1];
+                    Object.keys(last).forEach((key) => {
+                        el.style[key] = last[key];
+                    });
+                }
+            }
+
+            function pageLoadAnimation() {
+                const header = document.querySelector('.header');
+                animateElement(header, [{ opacity: 0, transform: 'translateY(-20px)' }, { opacity: 1, transform: 'translateY(0px)' }],
+                    { duration: 600, easing: 'ease-out', fill: 'forwards' });
+
+                const cards = document.querySelectorAll('.card');
+                cards.forEach((card, index) => {
+                    animateElement(card, [{ opacity: 0, transform: 'translateY(15px)' }, { opacity: 1, transform: 'translateY(0px)' }],
+                        { duration: 500, easing: 'ease-out', fill: 'forwards', delay: index * 80 });
+                });
+
+                const credit = document.querySelector('.credit-wrap');
+                animateElement(credit, [{ opacity: 0, transform: 'translateY(15px)' }, { opacity: 1, transform: 'translateY(0px)' }],
+                    { duration: 500, easing: 'ease-out', fill: 'forwards', delay: 400 });
+
+                animateElement(headerIcon, [
+                    { transform: 'scale(0.9) rotate(-5deg)' },
+                    { transform: 'scale(1.05) rotate(5deg)' },
+                    { transform: 'scale(1) rotate(0deg)' }
+                ], { duration: 1200, easing: 'ease-in-out' });
+            }
+
+            function animateDropzoneOver() {
+                animateElement(document.getElementById('dzIcon'),
+                    [{ transform: 'scale(1) translateY(0px)' }, { transform: 'scale(1.2) translateY(-8px)' }],
+                    { duration: 300, easing: 'ease-out' });
+            }
+
+            function animateDropzoneLeave() {
+                animateElement(document.getElementById('dzIcon'),
+                    [{ transform: 'scale(1.2) translateY(-8px)' }, { transform: 'scale(1) translateY(0px)' }],
+                    { duration: 300, easing: 'ease-out' });
+            }
+
+            function animateFileInfo() {
+                animateElement(fileInfo,
+                    [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'translateY(0px)' }],
+                    { duration: 400, easing: 'ease-out', fill: 'forwards' });
+            }
+
+            function animateProgressStart() {
+                animateElement(progressWrap,
+                    [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'translateY(0px)' }],
+                    { duration: 300, easing: 'ease-out', fill: 'forwards' });
+            }
+
+            function animateHashReveal() {
+                animateElement(hashSection,
+                    [{ opacity: 0, transform: 'translateY(15px)' }, { opacity: 1, transform: 'translateY(0px)' }],
+                    { duration: 500, easing: 'ease-out', fill: 'forwards' });
+
+                spawnHashParticles();
+
+                animateElement(document.querySelector('.hash-display'), [
+                    { boxShadow: '0 0 0px rgba(88,166,255,0)' },
+                    { boxShadow: '0 0 20px rgba(88,166,255,0.3)' },
+                    { boxShadow: '0 0 0px rgba(88,166,255,0)' }
+                ], { duration: 1500, easing: 'ease-out' });
+
+                hashOutput.style.opacity = '0';
+                animateElement(hashOutput, [{ opacity: 0 }, { opacity: 1 }],
+                    { duration: 600, easing: 'ease-out', fill: 'forwards' });
+            }
+
+            function spawnHashParticles() {
+                if (!hashParticles) return;
+                hashParticles.innerHTML = '';
+                for (let i = 0; i < 20; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'hash-particle';
+                    particle.style.left = (20 + Math.random() * 60) + '%';
+                    particle.style.top = (30 + Math.random() * 40) + '%';
+                    particle.style.width = (2 + Math.random() * 4) + 'px';
+                    particle.style.height = particle.style.width;
+                    hashParticles.appendChild(particle);
+                    animateElement(particle, [
+                        { transform: 'translate(0px, 0px) scale(0)', opacity: 0 },
+                        { transform: `translate(${rand(-80, 80)}px, ${rand(-60, 60)}px) scale(1.5)`, opacity: 0.8 },
+                        { transform: `translate(${rand(-120, 120)}px, ${rand(-90, 90)}px) scale(0)`, opacity: 0 }
+                    ], { duration: 1200, easing: 'ease-out', delay: i * 30, fill: 'forwards' });
+                }
+            }
+
+            function animateCompareShow() {
+                animateElement(compareSection,
+                    [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'translateY(0px)' }],
+                    { duration: 400, easing: 'ease-out', fill: 'forwards' });
+            }
+
+            function animateButtonShine() {
+                btnCompare.classList.add('shine');
+                setTimeout(() => btnCompare.classList.remove('shine'), 600);
+            }
+
+            function animateStatusResult(isValid, customText) {
+                status.classList.add('visible');
+                status.classList.remove('valid', 'invalid', 'warn');
+
+                if (customText) {
+                    status.classList.add('warn');
+                    statusIcon.textContent = '⚠️';
+                    statusText.textContent = customText;
+                } else if (isValid) {
+                    status.classList.add('valid');
+                    statusIcon.textContent = '✅';
+                    statusText.textContent = ' VALID — Hash cocok! File asli dan tidak dimodifikasi.';
+                } else {
+                    status.classList.add('invalid');
+                    statusIcon.textContent = '❌';
+                    statusText.textContent = ' TIDAK VALID — Hash tidak cocok! File mungkin telah dimodifikasi atau berbeda.';
+                }
+
+                animateElement(status, [
+                    { transform: 'scale(0.8)' },
+                    { transform: 'scale(1.05)' },
+                    { transform: 'scale(1)' }
+                ], { duration: 600, easing: 'ease-out' });
+            }
+
+            function animateHistoryItem(el, index) {
+                animateElement(el,
+                    [{ opacity: 0, transform: 'translateX(-15px)' }, { opacity: 1, transform: 'translateX(0px)' }],
+                    { duration: 350, delay: index * 60, easing: 'ease-out', fill: 'forwards' });
+            }
+
+            function animateCopySuccess(button) {
+                animateElement(button, [
+                    { transform: 'scale(1)' },
+                    { transform: 'scale(1.1)' },
+                    { transform: 'scale(1)' }
+                ], { duration: 400, easing: 'ease-out' });
+            }
+
+            function animateClearHistory() {
+                const items = historyList.querySelectorAll('.history-item');
+                items.forEach((item, index) => {
+                    animateElement(item,
+                        [{ opacity: 1, transform: 'translateX(0px)' }, { opacity: 0, transform: 'translateX(20px)' }],
+                        { duration: 300, delay: index * 30, easing: 'ease-in' });
+                });
+                setTimeout(() => {
+                    historyList.innerHTML = '';
+                    historySection.classList.remove('visible');
+                }, 350 + items.length * 30);
+            }
+
+            function rand(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+
+            function loadHistory() {
+                try {
+                    const savedNew = sessionStorage.getItem('hash-history');
+                    const savedOld = sessionStorage.getItem('sha256-history');
+                    if (savedNew) {
+                        history = JSON.parse(savedNew);
+                    } else if (savedOld) {
+                        const legacy = JSON.parse(savedOld);
+                        history = legacy.map((item) => ({
+                            name: item.name,
+                            hash: item.hash,
+                            result: item.result,
+                            algorithm: 'SHA-256',
+                            time: item.time
+                        }));
+                        saveHistory();
+                    }
+                } catch (e) {
+                    history = [];
+                }
+                renderHistory();
+            }
+
+            function saveHistory() {
+                try {
+                    sessionStorage.setItem('hash-history', JSON.stringify(history));
+                } catch (e) {
+                    history.shift();
+                    saveHistory();
+                }
+            }
+
+            function addHistory(fileName, hash, result, algorithm) {
+                history.unshift({
+                    name: fileName,
+                    hash: hash,
+                    result: result,
+                    algorithm: algorithm,
+                    time: Date.now()
+                });
+                if (history.length > 20) history.length = 20;
+                saveHistory();
+                renderHistory(true);
+            }
+
+            function renderHistory(animateNew) {
+                if (history.length === 0) {
+                    historySection.classList.remove('visible');
+                    return;
+                }
+                historySection.classList.add('visible');
+                historyList.innerHTML = history
+                    .map((item, i) => {
+                        const statusLabel = item.result === 'valid'
+                            ? 'VALID'
+                            : item.result === 'invalid'
+                                ? 'INVALID'
+                                : 'HASH';
+                        const badgeClass = item.result === 'valid'
+                            ? 'valid'
+                            : item.result === 'invalid'
+                                ? 'invalid'
+                                : 'hash';
+                        const algorithmLabel = item.algorithm || 'SHA-256';
+                        return `
+                            <div class="history-item${animateNew && i === 0 ? '' : ' show'}" data-index="${i}">
+                                <span class="history-name">📄 ${escapeHtml(item.name)}</span>
+                                <span class="history-badge ${badgeClass}">
+                                    ${algorithmLabel} · ${statusLabel}
+                                </span>
+                            </div>
+                        `;
+                    })
+                    .join('');
+
+                if (animateNew) {
+                    const first = historyList.querySelector('.history-item:not(.show)');
+                    if (first) {
+                        animateHistoryItem(first, 0);
+                        first.classList.add('show');
+                    }
+                }
+            }
+
+            function escapeHtml(str) {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            function updateAlgorithmUI() {
+                const algorithm = algorithmSelect.value;
+                currentAlgorithm = algorithm;
+                const meta = algorithms[algorithm];
+                hashAlgorithmLabel.textContent = algorithm;
+                algorithmHint.textContent = `Output: ${meta.length} karakter hex`;
+                compareHint.textContent = `Panjang diharapkan: ${meta.length} karakter hex`;
+                compareInput.placeholder = `Paste hash ${algorithm} untuk dibandingkan...`;
+            }
+
+            function resetUI() {
+                hashSection.classList.remove('visible');
+                compareSection.classList.remove('visible');
+                status.classList.remove('visible', 'valid', 'invalid', 'warn');
+                statusIcon.textContent = '';
+                statusText.textContent = '';
+                compareInput.value = '';
+                currentHash = '';
+                if (hashParticles) hashParticles.innerHTML = '';
+            }
+
+            async function computeHash(file, algorithm, onProgress) {
+                const chunkSize = 2 * 1024 * 1024;
+                onProgress(0);
+
+                if (file.size <= chunkSize) {
+                    onProgress(50);
+                    const buffer = await file.arrayBuffer();
+                    onProgress(75);
+                    const hashBuffer = await crypto.subtle.digest(algorithm, buffer);
+                    onProgress(100);
+                    return bufferToHex(hashBuffer);
+                }
+
+                const hashState = new ChunkedHasher();
+                let offset = 0;
+
+                while (offset < file.size) {
+                    const end = Math.min(offset + chunkSize, file.size);
+                    const blob = file.slice(offset, end);
+                    const buffer = await blob.arrayBuffer();
+                    hashState.update(new Uint8Array(buffer));
+                    offset = end;
+                    onProgress(Math.round((offset / file.size) * 100));
+                    await new Promise((r) => setTimeout(r, 0));
+                }
+
+                const hashBuffer = await hashState.digest(algorithm);
+                return bufferToHex(hashBuffer);
+            }
+
+            class ChunkedHasher {
+                constructor() {
+                    this.chunks = [];
+                    this.totalSize = 0;
+                }
+                update(uint8) {
+                    this.chunks.push(uint8);
+                    this.totalSize += uint8.length;
+                }
+                async digest(algorithm) {
+                    const combined = new Uint8Array(this.totalSize);
+                    let offset = 0;
+                    for (const chunk of this.chunks) {
+                        combined.set(chunk, offset);
+                        offset += chunk.length;
+                    }
+                    return await crypto.subtle.digest(algorithm, combined);
+                }
+            }
+
+            function bufferToHex(buffer) {
+                return Array.from(new Uint8Array(buffer))
+                    .map((b) => b.toString(16).padStart(2, '0'))
+                    .join('');
+            }
+
+            function bufferToBase64(buffer) {
+                const bytes = new Uint8Array(buffer);
+                let binary = '';
+                bytes.forEach((b) => { binary += String.fromCharCode(b); });
+                return btoa(binary);
+            }
+
+            function base64ToBuffer(base64) {
+                const binary = atob(base64.trim());
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) {
+                    bytes[i] = binary.charCodeAt(i);
+                }
+                return bytes.buffer;
+            }
+
+            function formatBytes(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            function setCopyFeedback(button) {
+                button.textContent = '✅ Copied!';
+                button.classList.add('copied');
+                animateCopySuccess(button);
+                setTimeout(() => {
+                    button.textContent = button.dataset.defaultLabel || 'Copy';
+                    button.classList.remove('copied');
+                }, 2000);
+            }
+
+            function showVerifyStatus(isValid, message) {
+                verifyStatus.classList.add('visible');
+                verifyStatus.classList.remove('valid', 'invalid', 'warn');
+                if (isValid === null) {
+                    verifyStatus.classList.add('warn');
+                    verifyStatusIcon.textContent = '⚠️';
+                    verifyStatusText.textContent = message;
+                } else if (isValid) {
+                    verifyStatus.classList.add('valid');
+                    verifyStatusIcon.textContent = '✅';
+                    verifyStatusText.textContent = 'SIGNATURE VALID ✅';
+                } else {
+                    verifyStatus.classList.add('invalid');
+                    verifyStatusIcon.textContent = '❌';
+                    verifyStatusText.textContent = 'TIDAK VALID ❌';
+                }
+            }
+
+            tabButtons.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    tabButtons.forEach((b) => b.classList.remove('active'));
+                    tabPanels.forEach((panel) => panel.classList.remove('active'));
+                    btn.classList.add('active');
+                    const panel = document.getElementById(btn.dataset.tab);
+                    if (panel) panel.classList.add('active');
+                });
+            });
+
+            algorithmSelect.addEventListener('change', () => {
+                updateAlgorithmUI();
+                resetUI();
+            });
+
+            dropzone.addEventListener('click', () => fileInput.click());
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) handleFile(e.target.files[0]);
+            });
+
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (!dropzone.classList.contains('dragover')) {
+                    dropzone.classList.add('dragover');
+                    animateDropzoneOver();
+                }
+            });
+
+            dropzone.addEventListener('dragleave', () => {
+                dropzone.classList.remove('dragover');
+                animateDropzoneLeave();
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+                animateDropzoneLeave();
+                if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+            });
+
+            async function handleFile(file) {
+                currentFile = file;
+                resetUI();
+
+                fileInfo.classList.add('visible');
+                fiName.textContent = file.name;
+                fiSize.textContent = formatBytes(file.size);
+                fiType.textContent = file.type || 'unknown';
+                animateFileInfo();
+
+                progressWrap.classList.add('visible');
+                progressFill.style.width = '0%';
+                progressText.textContent = 'Membaca file...';
+                animateProgressStart();
+
+                try {
+                    const hash = await computeHash(file, currentAlgorithm, (pct) => {
+                        progressFill.style.width = pct + '%';
+                        progressText.textContent = `Menghitung hash ${currentAlgorithm}... ${pct}%`;
+                    });
+
+                    currentHash = hash;
+                    hashOutput.textContent = hash;
+                    hashSection.classList.add('visible');
+                    compareSection.classList.add('visible');
+                    progressText.textContent = '✅ Selesai!';
+
+                    animateHashReveal();
+                    animateCompareShow();
+                    addHistory(file.name, hash, 'hash', currentAlgorithm);
+                } catch (err) {
+                    progressText.textContent = '❌ Error: ' + err.message;
+                    console.error(err);
+                }
+            }
+
+            btnCopy.addEventListener('click', async () => {
+                if (!currentHash) return;
+                try {
+                    await navigator.clipboard.writeText(currentHash);
+                } catch (err) {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = currentHash;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                }
+                btnCopy.dataset.defaultLabel = '📋 Copy';
+                setCopyFeedback(btnCopy);
+            });
+
+            btnCompare.addEventListener('click', () => {
+                if (!currentHash) return;
+                const input = compareInput.value.trim().toLowerCase();
+                if (!input) return;
+
+                animateButtonShine();
+                const expectedLength = algorithms[currentAlgorithm].length;
+                if (input.length !== expectedLength) {
+                    animateStatusResult(false, `Panjang hash tidak sesuai (${input.length}/${expectedLength}).`);
+                    return;
+                }
+
+                const isValid = input === currentHash.toLowerCase();
+                animateStatusResult(isValid);
+
+                if (currentFile) {
+                    addHistory(currentFile.name, currentHash, isValid ? 'valid' : 'invalid', currentAlgorithm);
+                }
+            });
+
+            compareInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') btnCompare.click();
+            });
+
+            btnClearHistory.addEventListener('click', () => {
+                if (history.length === 0) return;
+                const items = historyList.querySelectorAll('.history-item');
+                if (items.length > 0) {
+                    animateClearHistory();
+                }
+                history = [];
+                sessionStorage.removeItem('hash-history');
+            });
+
+            btnGenerateKeypair.addEventListener('click', async () => {
+                try {
+                    const keyPair = await crypto.subtle.generateKey(
+                        { name: 'ECDSA', namedCurve: 'P-256' },
+                        true,
+                        ['sign', 'verify']
+                    );
+
+                    const publicKeyBuffer = await crypto.subtle.exportKey('spki', keyPair.publicKey);
+                    const privateKeyBuffer = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+
+                    publicKeyOutput.value = bufferToBase64(publicKeyBuffer);
+                    privateKeyOutput.value = bufferToBase64(privateKeyBuffer);
+                } catch (err) {
+                    publicKeyOutput.value = '';
+                    privateKeyOutput.value = '';
+                    alert('Gagal generate keypair: ' + err.message);
+                }
+            });
+
+            btnCopyPublic.addEventListener('click', async () => {
+                if (!publicKeyOutput.value) return;
+                try {
+                    await navigator.clipboard.writeText(publicKeyOutput.value);
+                } catch (err) {
+                    console.error(err);
+                }
+                btnCopyPublic.dataset.defaultLabel = 'Copy Public Key';
+                setCopyFeedback(btnCopyPublic);
+            });
+
+            btnCopyPrivate.addEventListener('click', async () => {
+                if (!privateKeyOutput.value) return;
+                try {
+                    await navigator.clipboard.writeText(privateKeyOutput.value);
+                } catch (err) {
+                    console.error(err);
+                }
+                btnCopyPrivate.dataset.defaultLabel = 'Copy Private Key';
+                setCopyFeedback(btnCopyPrivate);
+            });
+
+            btnSignPickFile.addEventListener('click', () => signFileInput.click());
+            signFileInput.addEventListener('change', (e) => {
+                signFile = e.target.files[0] || null;
+                signFileName.textContent = signFile ? signFile.name : 'Belum ada file';
+            });
+
+            btnSign.addEventListener('click', async () => {
+                if (!signFile) {
+                    alert('Pilih file terlebih dahulu.');
+                    return;
+                }
+                if (!signPrivateKey.value.trim()) {
+                    alert('Paste private key Base64 terlebih dahulu.');
+                    return;
+                }
+                try {
+                    const keyBuffer = base64ToBuffer(signPrivateKey.value);
+                    const privateKey = await crypto.subtle.importKey(
+                        'pkcs8',
+                        keyBuffer,
+                        { name: 'ECDSA', namedCurve: 'P-256' },
+                        false,
+                        ['sign']
+                    );
+                    const dataBuffer = await signFile.arrayBuffer();
+                    const signatureBuffer = await crypto.subtle.sign(
+                        { name: 'ECDSA', hash: 'SHA-256' },
+                        privateKey,
+                        dataBuffer
+                    );
+                    signatureOutput.value = bufferToBase64(signatureBuffer);
+                } catch (err) {
+                    signatureOutput.value = '';
+                    alert('Gagal membuat signature: ' + err.message);
+                }
+            });
+
+            btnCopySignature.addEventListener('click', async () => {
+                if (!signatureOutput.value) return;
+                try {
+                    await navigator.clipboard.writeText(signatureOutput.value);
+                } catch (err) {
+                    console.error(err);
+                }
+                btnCopySignature.dataset.defaultLabel = 'Copy Signature';
+                setCopyFeedback(btnCopySignature);
+            });
+
+            btnVerifyPickFile.addEventListener('click', () => verifyFileInput.click());
+            verifyFileInput.addEventListener('change', (e) => {
+                verifyFile = e.target.files[0] || null;
+                verifyFileName.textContent = verifyFile ? verifyFile.name : 'Belum ada file';
+            });
+
+            btnVerify.addEventListener('click', async () => {
+                if (!verifyFile) {
+                    showVerifyStatus(null, 'Pilih file yang akan diverifikasi.');
+                    return;
+                }
+                if (!verifyPublicKey.value.trim()) {
+                    showVerifyStatus(null, 'Public key Base64 belum diisi.');
+                    return;
+                }
+                if (!verifySignature.value.trim()) {
+                    showVerifyStatus(null, 'Signature Base64 belum diisi.');
+                    return;
+                }
+                try {
+                    const publicKeyBuffer = base64ToBuffer(verifyPublicKey.value);
+                    const publicKey = await crypto.subtle.importKey(
+                        'spki',
+                        publicKeyBuffer,
+                        { name: 'ECDSA', namedCurve: 'P-256' },
+                        false,
+                        ['verify']
+                    );
+                    const signatureBuffer = base64ToBuffer(verifySignature.value);
+                    const dataBuffer = await verifyFile.arrayBuffer();
+                    const isValid = await crypto.subtle.verify(
+                        { name: 'ECDSA', hash: 'SHA-256' },
+                        publicKey,
+                        signatureBuffer,
+                        dataBuffer
+                    );
+                    showVerifyStatus(isValid);
+                } catch (err) {
+                    showVerifyStatus(null, 'Gagal verifikasi: ' + err.message);
+                }
+            });
+
+            updateAlgorithmUI();
+            loadHistory();
+            pageLoadAnimation();
+        })();
+    </script>
+</body>
